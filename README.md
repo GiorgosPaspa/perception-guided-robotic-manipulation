@@ -9,9 +9,15 @@ University of Patras, 2026
 
 ## Project
 
-The robot detects red cubes on a table and moves them using a suction gripper. The RealSense camera supplies color and depth images. We use ArUco markers to calibrate the camera position relative to the robot, then estimate each cube's location from the images.
+We built a system that detects red cubes on a table and moves them using a suction gripper. The ROS 2 software runs on a laptop, handling object detection, motion planning, and task execution. It communicates over TCP with two Python servers on the robot's Raspberry Pi, which control the arm joints and suction system.
 
-For motion control, we use quadratic-programming inverse kinematics and a final visual-servoing correction before grasping. The ROS 2 software runs on a laptop, handling object detection, motion planning, and task execution. It communicates over TCP with two Python servers on the robot's Raspberry Pi, which control the arm joints and suction system.
+## How it works
+
+- **Camera calibration — ArUco, PnP:** An ArUco marker at a known position is used to determine the transformation between the camera and robot coordinate frames.
+- **Cube localization — HSV, RGB-D:** Color thresholding identifies red regions. Depth measurements isolate each cube's top face; its center is estimated in 3D and transformed into the robot frame.
+- **Pre-grasp motion — quadratic programming:** An iterative inverse-kinematics solver uses the geometric Jacobian to reduce position and tool-axis errors, subject to joint position and velocity limits. It tries multiple initial joint configurations.
+- **Final alignment — visual servoing, Jacobian IK:** The camera detects a blue marker on the end effector and measures its offset from the cube. A damped Jacobian-based solver computes a small correction before grasping.
+- **Pick and place — TCP:** Joint and suction commands are sent to the Raspberry Pi. The robot grasps the cube, lifts it, moves to a preset drop pose, and releases it.
 
 ## Repository structure
 
