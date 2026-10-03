@@ -1,0 +1,6 @@
+# Non-ROS Python dependencies. Install ROS 2, cv_bridge and realsense2_camera separately.
+numpy
+scipy
+opencv-contrib-python
+pyrealsense2
+qpsolvers[osqp]
