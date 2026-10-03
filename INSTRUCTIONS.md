@@ -1,74 +1,48 @@
-# Running Instructions
+# Running instructions
 
-## What's in this folder
+## Files
 
-| Folder / File | What it is |
+| Path | Contents |
 |---|---|
-| `project3-team3_workspace/` | ROS 2 workspace (laptop) |
-| `myarm_workspace/` | Two TCP servers that run on the MyArm Raspberry Pi |
-| `suction_kit_base_stl/` | 3D-printed suction kit mount (STL files) |
-| `project3-team3_report.pdf` | Project report |
+| `project3-team3_workspace/` | ROS 2 packages for the computer |
+| `myarm_workspace/` | Joint and suction TCP servers for the Raspberry Pi |
+| `suction_kit_base_stl/` | Printable suction mount |
+| `docs/Project_Report.pdf` | Project report |
 
----
+## Dependencies
 
-## Laptop — Python dependencies
-
-Any ROS 2 distro works (Humble, Iron, Jazzy, etc.). The arm is controlled over TCP, not ROS 2 inter-machine communication, so the ROS version on the Pi does not need to match.
+Install a compatible ROS 2 distribution, `colcon`, `cv_bridge`, and the RealSense ROS camera package. ROS and Python dependency compatibility varies by system.
 
 ```bash
-pip install numpy opencv-contrib-python pyrealsense2 scipy qpsolvers[osqp]
-```
-
-Also install the ROS 2 Python client and vision packages (usually already present):
-```bash
+python3 -m pip install -r requirements-laptop.txt
 sudo apt install ros-$ROS_DISTRO-cv-bridge ros-$ROS_DISTRO-realsense2-camera
 ```
 
----
+The robot Raspberry Pi requires its compatible `pymycobot` and GPIO support.
 
-## How to run
+## Run
 
-### Step 1 — Start the TCP servers on the Pi
+1. Connect the RealSense D435i to the computer.
+2. On the Raspberry Pi, start the servers in separate terminals from `myarm_workspace/`:
 
-SSH into the Pi, then in two separate terminals:
+   ```bash
+   python3 joint_tcp_server.py
+   python3 suction_tcp_server.py
+   ```
 
-```bash
-python3 joint_tcp_server.py
-python3 suction_tcp_server.py
-```
+3. On the computer:
 
-Both servers will keep running and wait for connections from the laptop.
+   ```bash
+   cd project3-team3_workspace
+   colcon build
+   source install/setup.bash
+   ros2 run perception_pkg aruco_extrinsic_calibrator
+   ```
 
-### Step 2 — Build and source the ROS 2 workspace on the laptop
+4. Check camera calibration, the reachable workspace, suction equipment, joint limits, and the emergency stop. Then run:
 
-```bash
-cd project3-team3_workspace
-colcon build
-source install/setup.bash
-```
+   ```bash
+   ros2 run control_pkg task_automation_node
+   ```
 
-### Step 3 — Run the calibration (once per session)
-
-Place an ArUco marker at the known position on the table, then:
-
-```bash
-ros2 run perception_pkg aruco_extrinsic_calibrator
-```
-
-This writes `~/.ros/myarm_camera_extrinsic.json` and exits.
-
-### Step 4 — Run the task automation
-
-```bash
-ros2 run control_pkg task_automation_node
-```
-
-This runs the full pick-and-place loop automatically.
-
----
-
-## Notes
-
-- The Intel RealSense D435i must be connected to the laptop via USB before launching any node.
-- The Pi's IP address is configured inside the node parameters (default `192.168.0.103`). Change it if running on different robotic arm.
-- The TCP servers run on ports **5017** (joints) and **5018** (suction).
+The calibration file is stored at `~/.ros/myarm_camera_extrinsic.json`. Example TCP settings are Raspberry Pi `192.168.0.103`, joint port `5017` and suction port `5018`; adjust them for your trusted local network. These instructions are hardware-specific and have not been independently retested for this repository.
