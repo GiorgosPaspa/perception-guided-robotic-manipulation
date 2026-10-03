@@ -11,7 +11,7 @@ University of Patras, 2026
 
 The robot detects red cubes on a table and moves them using a suction gripper. The RealSense camera supplies color and depth images. We use ArUco markers to calibrate the camera position relative to the robot, then estimate each cube's location from the images.
 
-For motion control, we use quadratic-programming inverse kinematics and a final visual-servoing correction before grasping. The ROS 2 nodes run on a computer, while two TCP servers on the robot's Raspberry Pi handle joint movement and suction.
+For motion control, we use quadratic-programming inverse kinematics and a final visual-servoing correction before grasping. The ROS 2 software runs on a laptop, handling object detection, motion planning, and task execution. It communicates over TCP with two Python servers on the robot's Raspberry Pi, which control the arm joints and suction system.
 
 ## Repository structure
 
