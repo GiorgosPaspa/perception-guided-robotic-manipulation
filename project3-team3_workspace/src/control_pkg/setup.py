@@ -17,10 +17,10 @@ setup(
     ],
     install_requires=['setuptools', 'numpy', 'qpsolvers', 'osqp', 'scipy'],
     zip_safe=True,
-    maintainer='george',
-    maintainer_email='george@todo.todo',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    maintainer='Georgios Paspalakis and Dimitrios Giannopoulos',
+    maintainer_email='',
+    description='ROS 2 inverse kinematics, motion control and pick-and-place automation for MyArm 300 Pi',
+    license='Proprietary',
     extras_require={
         'test': [
             'pytest',
