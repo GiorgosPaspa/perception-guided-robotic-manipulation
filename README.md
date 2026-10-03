@@ -7,6 +7,12 @@ University of Patras, 2026
 
 [Demo video](https://www.youtube.com/shorts/BuSqtGto4cE) · [Project report](docs/Project_Report.pdf)
 
+<a href="https://www.youtube.com/shorts/BuSqtGto4cE">
+  <img src="docs/demo.png" alt="MyArm robot with suction gripper and RealSense camera performing cube pick and place — click to watch the demonstration" width="400">
+</a>
+
+*Click the image to watch the demonstration.*
+
 ## Project
 
 We built a system that detects red cubes on a table and moves them using a suction gripper. The ROS 2 software runs on a laptop, handling object detection, motion planning, and task execution. It communicates over TCP with two Python servers on the robot's Raspberry Pi, which control the arm joints and suction system.
