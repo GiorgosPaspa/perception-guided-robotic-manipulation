@@ -1,4 +1,6 @@
-# Non-ROS Python dependencies. Install ROS 2, cv_bridge and realsense2_camera separately.
+# Non-ROS Python packages used by the laptop-side pipeline.
+# ROS 2, cv_bridge, realsense2_camera and message types must be installed
+# through the appropriate ROS distribution/OS packages.
 numpy
 scipy
 opencv-contrib-python

@@ -1,97 +1,149 @@
 # Perception-Guided Robotic Manipulation
 
-**ROS 2 perception and control for autonomous pick-and-place manipulation using a seven-degree-of-freedom robotic arm.**
+**A ROS 2 perception-and-control pipeline for autonomous pick-and-place using a 7-DOF robotic arm.**
 
-**Academic project:** Perception-Guided Arm Control in Unstructured Scenes — University of Patras (June 2026)  
+**Project:** Perception-Guided Arm Control in Unstructured Scenes (University of Patras, June 2026)  
 **Contributors:** Dimitrios Giannopoulos and Georgios Paspalakis  
-**Hardware:** Elephant Robotics MyArm 300 Pi, Intel RealSense D435i RGB-D camera, Raspberry Pi, suction end effector
+**Hardware:** Elephant Robotics MyArm 300 Pi · Intel RealSense D435i · Raspberry Pi · suction-cup end effector
 
 ## Overview
 
-This two-person project investigates camera-guided robotic manipulation. The implemented pipeline locates red cubes in tabletop scenes, transforms RGB-D detections to the robot's frame, computes motion using inverse kinematics, applies visual feedback, and performs pick–lift–transport–release sequences.
+This team project implements a camera-guided manipulation pipeline that recognizes **red target cubes** in cluttered tabletop scenes and attempts to relocate them using a vacuum gripper. The robot is controlled with ROS 2 on a host computer and lightweight TCP services running on the MyArm's embedded Raspberry Pi.
 
-### Components
+The key engineering components are:
 
-- **RGB-D perception:** HSV colour segmentation, depth processing, top-face estimation.
-- **Extrinsic calibration:** ArUco markers to relate the camera and robot base frames.
-- **Constrained motion:** multistart quadratic-programming inverse kinematics and local Jacobian/Newton–Raphson corrections.
-- **Visual servoing:** camera-based position error estimation and corrective arm motion.
-- **Hardware interface:** ROS 2 nodes on the laptop and lightweight TCP joint/suction services on the Raspberry Pi.
+- **3D perception:** RGB-D sensing, HSV-based target segmentation, depth filtering and top-face estimation.
+- **Coordinate calibration:** ArUco-marker extrinsic calibration maps camera measurements into the robot base frame.
+- **Motion computation:** Multistart quadratic-programming (QP) inverse kinematics with joint constraints, plus Jacobian/Newton–Raphson correction for local motion.
+- **Closed-loop refinement:** Image-based XY error estimation and a visual-servoing correction before grasping.
+- **Task execution:** A pick–lift–transport–release sequence with retry logic, suction actuation, and joint commands sent over TCP.
 
-## Architecture
+The accompanying [project report](docs/Project_Report.pdf) explains the mathematical formulation, design decisions, hardware integration and experimental observations. The report's student ID numbers have been redacted; contributor names remain intact.
+
+## System architecture
 
 ```mermaid
 flowchart TD
-  Camera[RealSense RGB-D camera] --> Perception[ROS 2 perception_pkg]
-  Perception --> Controller[ROS 2 control_pkg]
-  Controller --> TCP[Joint and suction TCP services]
-  TCP --> Arm[MyArm 300 Pi robot]
-  Arm --> Camera
+    Camera[RealSense D435i<br/>RGB + depth] --> Perception[ROS 2 perception_pkg<br/>Calibration + target localization]
+    Perception --> Control[ROS 2 control_pkg<br/>QP IK + visual servoing + task sequence]
+    Control --> TCP[TCP commands over local network]
+    TCP --> Pi[MyArm Raspberry Pi<br/>Joint and suction servers]
+    Pi --> Arm[7-DOF arm + vacuum gripper]
+    Arm --> Camera
 ```
 
-## Code layout
+The *perception* and *control* packages run in the host's ROS 2 workspace. The Raspberry Pi provides the physical robot and suction interfaces; the Pi and laptop need network connectivity.
 
-- `project3-team3_workspace/src/perception_pkg/`: camera calibration, cube localization, and visual-servoing measurements.
-- `project3-team3_workspace/src/control_pkg/`: inverse kinematics, task automation, TCP command bridge, and motion control.
-- `myarm_workspace/`: hardware-side joint and suction TCP services.
-- `suction_kit_base_stl/`: gripper-mount geometry.
-- `docs/`: project report and publication notes.
-- `INSTRUCTIONS.md`: original running instructions.
-- `scripts/check_source.py`: lightweight static checks.
+## Repository layout
 
-Generated `build/`, `install/`, `log/`, bytecode, and other machine-local artifacts are intentionally excluded.
+```text
+.
+├── project3-team3_workspace/
+│   └── src/
+│       ├── perception_pkg/     # Camera calibration, RGB-D estimation, visual feedback
+│       └── control_pkg/        # QP IK, TCP command bridge, task automation
+├── myarm_workspace/            # TCP services for the robot's Raspberry Pi
+│   ├── joint_tcp_server.py
+│   └── suction_tcp_server.py
+├── suction_kit_base_stl/       # Custom 3D-printed gripper-mount geometry
+├── docs/
+│   └── Project_Report.pdf     # Team report (student IDs redacted)
+├── scripts/
+│   └── check_source.py        # Hardware-free syntax/layout validation
+├── requirements-laptop.txt
+└── INSTRUCTIONS.md            # Original project running notes
+```
 
-## Setup and operation
+Generated `build/`, `install/`, `log/` and Python caches are intentionally not versioned.
 
-Requires an appropriate ROS 2 installation, `colcon`, RealSense ROS camera support, compatible Python dependencies, a calibrated ArUco setup, and the original MyArm hardware.
+## Requirements
 
-On the Raspberry Pi, run the joint and suction servers in separate terminals:
+**Hardware**: MyArm 300 Pi, D435i camera, compatible suction hardware, configured marker and work surface. Run mechanical/electrical safety checks before operating the physical system. The supplied relay design is project-specific and should not be treated as a certified reference design.
+
+**Laptop**: a working ROS 2 installation (the original running notes mention Humble, Iron and Jazzy), `colcon`, ROS packages `rclpy`, `cv_bridge`, `realsense2_camera`, and the Python dependencies below. Package compatibility depends on your ROS and OS distribution.
 
 ```bash
-python3 joint_tcp_server.py
-python3 suction_tcp_server.py
+python3 -m pip install -r requirements-laptop.txt
 ```
 
-Build the workspace on the host machine:
+The MyArm Pi needs the manufacturer-supported Python robot interface (`pymycobot`) and GPIO support suitable for the board, as well as access to the joint and suction devices. Do not assume that desktop Python packages can be installed identically on the Pi.
 
-```bash
-cd project3-team3_workspace
-colcon build
-source install/setup.bash
-```
+## Running the supplied pipeline
 
-Calibrate before motion:
+These steps summarize the original [running instructions](INSTRUCTIONS.md). **They require real hardware and calibration and have not been executed in this documentation-only packaging pass.**
 
-```bash
-ros2 run perception_pkg aruco_extrinsic_calibrator
-```
+1. On the **robot Raspberry Pi**, start both supplied TCP services from `myarm_workspace/` in separate terminals:
 
-Calibration is saved locally to `~/.ros/myarm_camera_extrinsic.json`; don't commit machine-specific calibration. After verifying robot reach, safe operating limits, network, and hardware, the original project uses:
+   ```bash
+   python3 joint_tcp_server.py
+   python3 suction_tcp_server.py
+   ```
 
-```bash
-ros2 run control_pkg task_automation_node
-```
+2. On the **ROS 2 laptop**, build the workspace and source its setup script:
 
-The original code includes example private-network settings: Raspberry Pi `192.168.0.103`, joint port `5017`, suction port `5018`. Adapt these to a trusted LAN before use.
+   ```bash
+   cd project3-team3_workspace
+   colcon build
+   source install/setup.bash
+   ```
 
-**Safety:** No hardware operation was performed for this publication pass. Robot commands must not be run without device-specific inspection, emergency-stop readiness and safety procedures.
+3. Calibrate the camera extrinsics using a correctly placed ArUco marker:
 
-## Reported results and limitations
+   ```bash
+   ros2 run perception_pkg aruco_extrinsic_calibrator
+   ```
 
-The original team report describes cube grasping and relocation demonstrations, reporting over 90% grasp success in favourable separated-object scenes while noting lower reliability with occlusion or close/rotated targets. No standardized public test set or complete trial-count breakdown accompanies that observation, so this is a reported project demonstration rather than an independently replicated benchmark.
+   The calibrator writes `~/.ros/myarm_camera_extrinsic.json`; this **local calibration** should not be committed.
 
-The implementation assumes the original lab's target colour, camera positioning, kinematic parameters, and TCP layout. It has not been ported to a separate simulator in this preparation pass.
+4. Inspect the joint targets, reachable workspace, suction wiring, emergency stop, calibration accuracy, and network address before running automatic motion. Then run:
+
+   ```bash
+   ros2 run control_pkg task_automation_node
+   ```
+
+The supplied nodes default to `192.168.0.103` (Pi) and TCP ports `5017` (joint control) / `5018` (suction). These are **example local-network settings**, not discovery or authentication mechanisms. Restrict access to a trusted LAN. Some launch scripts are retained from development and contain example device-specific settings; the principal execution path is the one documented above.
+
+## Implementation details
+
+| Module | Relevant code |
+|---|---|
+| Camera-to-base extrinsic calibration | `perception_pkg/perception_pkg/aruco_extrinsic_calibrator.py` |
+| RGB-D cube localization | `perception_pkg/perception_pkg/top_face_center_node.py` and `top_face_center_mask.py` |
+| Visual-servoing measurements | `perception_pkg/perception_pkg/visual_servoing_perception_node.py` |
+| QP and local IK | `control_pkg/control_pkg/qp_ik_solver.py`, `nr_ik.py` |
+| End-to-end pick-and-place sequencing | `control_pkg/control_pkg/task_automation_node.py` |
+| Physical joint/suction interface | `myarm_workspace/` |
+
+These paths are relative to `project3-team3_workspace/src/` for the ROS packages.
+
+## Results and limitations
+
+The team report describes successful grasp-and-relocation demonstrations across different cube configurations. It reports **over 90% grasp success in favorable, well-separated scenes**, while also documenting reduced reliability under occlusion or tightly clustered/rotated targets. The report does not provide a standardized benchmark dataset or a complete trial count for that percentage; it should be interpreted as a project observation rather than an independently reproduced performance guarantee.
+
+Several quantities (target color/size, tool offset, joint poses, calibration locations, timeouts and network settings) are tied to the original lab setup. The pipeline has not been ported or verified against a robot simulator for this GitHub packaging pass. **Do not execute automatic movement without hardware-specific review and safe operating procedures.**
 
 ## Verification
+
+A lightweight hardware-free check can be run with:
 
 ```bash
 python3 scripts/check_source.py
 ```
 
-This hardware-free check covers Python parsing, package metadata, and selected project structure; it does **not** validate ROS dependencies, sensor data, robotic motion, or grasp performance.
+This verifies Python syntax, ROS 2 entry point declarations, package metadata XML readability, and required repository layout. It **does not** validate ROS dependencies, sensor streams, physical motion, real-time behavior, or grasp performance.
 
-## Contributors and licensing
+## Attribution and reuse
 
-This is a **joint academic project** by **Dimitrios Giannopoulos** and **Georgios Paspalakis**. Please credit both collaborators.
+This was developed as a **two-person academic team project**, not a sole-authored work. Please retain both authors' names when referring to the project.
 
-No open-source license is assigned at this stage. Public visibility does not by itself establish reuse rights, and publication/licensing should be agreed with both contributors.
+**License:** No open-source license is included at this stage; the contributors have not specified one. Public availability alone does not grant reuse or redistribution rights. Contact the contributors about licensing.
+
+## Publishing to your own GitHub account
+
+First create an **empty private repository** named `perception-guided-robotic-manipulation` under `GiorgosPaspa` on GitHub (without automatically generating a README, license or `.gitignore`). After extracting this archive into a local folder and ensuring Git is installed and authenticated, run:
+
+```bash
+bash scripts/publish_to_github.sh
+```
+
+The script asks for confirmation and then creates the first Git commit and pushes the files. Do not change the repo to public until both contributors have agreed to publication and licensing/ownership questions have been resolved.

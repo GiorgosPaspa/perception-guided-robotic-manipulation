@@ -1,9 +1,10 @@
-# Repository publication notes
+# Packaging notes
 
-This is a joint academic project by Dimitrios Giannopoulos and Georgios Paspalakis.
+This publication-ready layout was built from the team's original coursework archive.
 
-The packaging archive prepared from the original coursework excludes generated ROS build directories, Python caches, and student identification numbers in the report. Code should be checked on the actual robotic hardware before operating.
-
-This repository is private pending coauthor approval for public distribution. No open-source license has been selected.
-
-**Upload status:** README, metadata and instructions have been initialized. Other project source files, models and the redacted PDF must still be transferred from the prepared project archive. Do not treat the repository as a complete runnable distribution until the remaining files are present.
+- The original Python source, launch files, hardware model STL files and original `INSTRUCTIONS.md` are included without changes to their algorithmic contents.
+- The ROS `build/`, `install/` and `log/` directories, bytecode, caches and machine-specific intermediate output are excluded.
+- `docs/Project_Report.pdf` is the original report with student ID numbers removed. Both contributors' names are kept.
+- The README, `.gitignore`, `requirements-laptop.txt` and `scripts/check_source.py` are newly supplied convenience files.
+- No permission to choose an open-source license for both contributors was provided. Accordingly no license is assigned.
+- The full physical robotics pipeline has **not** been tested in this packaging process. Static syntax/layout checks are not substitutes for hardware validation.
