@@ -21,20 +21,6 @@ For motion control, we use quadratic-programming inverse kinematics and a final 
 - `suction_kit_base_stl/` — 3D-printable suction mount
 - `docs/Project_Report.pdf` — project report
 
-## Running the project
-
-You will need the MyArm hardware, RealSense camera, ROS 2, `colcon`, and the Python dependencies in [requirements-laptop.txt](requirements-laptop.txt).
-
-Start the joint and suction servers on the Raspberry Pi. Then, on the ROS 2 computer:
-
-```bash
-cd project3-team3_workspace
-colcon build
-source install/setup.bash
-ros2 run perception_pkg aruco_extrinsic_calibrator
-ros2 run control_pkg task_automation_node
-```
-
-See [INSTRUCTIONS.md](INSTRUCTIONS.md) for setup details. The code uses calibration and network settings from our lab, so check those and the robot's operating limits before running it.
+Setup and execution instructions are available in [INSTRUCTIONS.md](INSTRUCTIONS.md).
 
 This was a joint university project. The hardware setup has not been retested for this repository, and no reuse license has been assigned.
