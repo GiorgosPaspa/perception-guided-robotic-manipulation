@@ -20,7 +20,7 @@ setup(
     maintainer='Georgios Paspalakis and Dimitrios Giannopoulos',
     maintainer_email='',
     description='ROS 2 inverse kinematics, motion control and pick-and-place automation for MyArm 300 Pi',
-    license='Proprietary',
+    license='License not specified',
     extras_require={
         'test': [
             'pytest',
