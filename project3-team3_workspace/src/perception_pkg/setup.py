@@ -17,10 +17,10 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='root',
-    maintainer_email='root@todo.todo',
-    description='TODO: Package description',
-    license='TODO: License declaration',
+    maintainer='Georgios Paspalakis and Dimitrios Giannopoulos',
+    maintainer_email='',
+    description='ROS 2 camera calibration, RGB-D cube localization and visual feedback for MyArm 300 Pi',
+    license='Proprietary',
     extras_require={
         'test': [
             'pytest',
